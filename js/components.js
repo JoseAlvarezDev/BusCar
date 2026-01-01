@@ -7,13 +7,10 @@ const Components = {
     // Header Component
     header: () => `
         <div class="header-container">
-            <a href="#" class="logo" onclick="App.goHome()">
-                <div class="logo-icon-wrapper">
-                    <i data-lucide="car-front" class="logo-icon-main"></i>
-                    <div class="logo-icon-glow"></div>
-                </div>
-                <span class="logo-text">Bus<span class="logo-accent">Car</span></span>
-            </a>
+        <a href="#" class="logo" onclick="App.goHome()">
+            <img src="assets/logo.png" alt="BusCar Logo" class="logo-image" style="height: 36px; width: auto; margin-right: 10px;">
+            <span class="logo-text">Bus<span class="logo-accent">Car</span></span>
+        </a>
             <nav class="nav">
                 <a href="#" class="nav-link active" data-section="home">
                     <i data-lucide="home"></i><span>Inicio</span>
@@ -448,10 +445,7 @@ const Components = {
                 <div class="footer-grid">
                     <div class="footer-info">
                         <a href="#" class="logo" onclick="App.goHome()">
-                            <div class="logo-icon-wrapper">
-                                <i data-lucide="car-front" class="logo-icon-main"></i>
-                                <div class="logo-icon-glow"></div>
-                            </div>
+                            <img src="assets/logo.png" alt="BusCar Logo" class="logo-image" style="height: 36px; width: auto; margin-right: 10px;">
                             <span class="logo-text">Bus<span class="logo-accent">Car</span></span>
                         </a>
                         <p> By Jose Alvarez Dev.El portal líder en España para encontrar tu próximo coche de segunda mano. Comparamos más de 500.000 ofertas diariamente.</p>

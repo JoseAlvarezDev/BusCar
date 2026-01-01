@@ -438,6 +438,80 @@ const Components = {
         `;
     },
 
+    // Alert Modal
+    alertModal: () => `
+        <div class="modal-overlay" onclick="App.closeAlertModal()"></div>
+        <div class="modal-content alert-modal">
+            <button class="modal-close" onclick="App.closeAlertModal()">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="modal-header">
+                <h2><i data-lucide="bell-plus"></i> Crear Alerta de Precio</h2>
+                <p>Recibe un email cuando aparezca un coche con estas características.</p>
+            </div>
+            <form id="alert-form" onsubmit="event.preventDefault(); App.submitAlert(this);">
+                <div class="form-group">
+                    <label>Email para notificaciones</label>
+                    <input type="email" name="email" required placeholder="tu@email.com" class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <select name="brand" id="alert-brand" class="form-input" onchange="App.updateModelSelect('alert-model', this.value)" required>
+                            <option value="">Seleccionar marca</option>
+                            ${Object.keys(window.BusCarData.brands).sort().map(b => `<option value="${b}">${b}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo (Opcional)</label>
+                        <select name="model" id="alert-model" class="form-input" disabled>
+                            <option value="">Cualquier modelo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio Máximo</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="euro"></i>
+                            <input type="number" name="max_price" required placeholder="Ej. 15000" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Año Mínimo</label>
+                        <select name="min_year" class="form-input">
+                            <option value="">Cualquier año</option>
+                            ${Array.from({ length: 15 }, (_, i) => 2025 - i).map(y => `<option value="${y}">${y}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                     <div class="form-group">
+                        <label>Km Máximos</label>
+                        <div class="input-with-icon">
+                            <i data-lucide="gauge"></i>
+                            <input type="number" name="max_km" placeholder="Ej. 100000" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Combustible</label>
+                        <select name="fuel" class="form-input">
+                            <option value="">Cualquiera</option>
+                            <option value="diesel">Diésel</option>
+                            <option value="gasolina">Gasolina</option>
+                            <option value="hibrido">Híbrido</option>
+                            <option value="electrico">Eléctrico</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="App.closeAlertModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear Alerta</button>
+                </div>
+            </form>
+        </div>
+    `,
+
     // Footer Component
     footer: () => `
         <footer class="footer">

@@ -595,48 +595,154 @@ const App = {
         lucide.createIcons();
     },
 
-    renderAlerts() {
+    async renderAlerts() {
         const container = document.getElementById('alerts-section');
+
+        // Show loading state if needed
+        if (this.state.loadingAlerts) {
+            container.innerHTML = '<div class="container"><div class="loading-spin"><i data-lucide="loader-2" class="spin"></i></div></div>';
+            lucide.createIcons();
+            return;
+        }
+
+        // Fetch alerts from API (using a stored user_id or similar, for now we simulate fetching user's alerts)
+        // Since we don't have auth, we'll store a random user_id in localStorage on first visit
+        let userId = localStorage.getItem('buscar-user-id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('buscar-user-id', userId);
+        }
+
+        try {
+            const res = await fetch(`${this.state.apiUrl}/alerts?user_id=${userId}`);
+            if (res.ok) {
+                this.state.alerts = await res.json();
+            }
+        } catch (error) {
+            console.error('Error loading alerts:', error);
+        }
+
         container.innerHTML = `
             <div class="container">
                 <div class="section-header">
                     <h2><i data-lucide="bell"></i> Alertas de Precio</h2>
-                    <button class="btn-primary" onclick="App.createAlert()"><i data-lucide="plus"></i> Nueva alerta</button>
+                    <button class="btn-primary" onclick="App.openAlertModal()"><i data-lucide="bell-plus"></i> Nueva alerta</button>
                 </div>
                 ${this.state.alerts.length > 0
-                ? `<div class="alerts-list">${this.state.alerts.map((a, i) => `
+                ? `<div class="alerts-list">${this.state.alerts.map(a => `
                         <div class="alert-item">
                             <div class="alert-info">
-                                <strong>${a.brand}${a.model ? ' ' + a.model : ''}</strong>
-                                <span>Precio máx: ${a.maxPrice.toLocaleString()}€</span>
+                                <div class="alert-title">
+                                    <strong>${a.brand} ${a.model || '(Todos)'}</strong>
+                                    <span class="alert-price">Max: ${a.max_price.toLocaleString()}€</span>
+                                </div>
+                                <div class="alert-details">
+                                    <span><i data-lucide="calendar" size="14"></i> >${a.min_year || 'Indif.'}</span>
+                                    <span><i data-lucide="gauge" size="14"></i> <${a.max_km ? (a.max_km / 1000) + 'k' : 'Indif.'}</span>
+                                    <span><i data-lucide="fuel" size="14"></i> ${a.fuel || 'Indif.'}</span>
+                                </div>
                             </div>
-                            <button class="btn-icon" onclick="App.deleteAlert(${i})"><i data-lucide="trash-2"></i></button>
+                            <button class="btn-icon delete-alert" onclick="App.deleteAlert(${a.id})" title="Eliminar alerta">
+                                <i data-lucide="trash-2"></i>
+                            </button>
                         </div>
                     `).join('')}</div>`
-                : '<div class="empty-state"><div class="empty-icon"><i data-lucide="bell-off"></i></div><h3>No tienes alertas</h3><p>Crea alertas para saber cuando aparezcan coches que te interesen</p></div>'
+                : '<div class="empty-state"><div class="empty-icon"><i data-lucide="bell-off"></i></div><h3>No tienes alertas activas</h3><p>Crea una alerta y te avisaremos cuando bajen los precios.</p></div>'
             }
             </div>
         `;
         lucide.createIcons();
     },
 
-    createAlert() {
-        const brand = prompt('¿Qué marca buscas?');
-        if (!brand) return;
-        const maxPrice = parseInt(prompt('¿Precio máximo?'));
-        if (!maxPrice) return;
+    openAlertModal() {
+        const modal = document.getElementById('alert-modal');
+        modal.innerHTML = Components.alertModal();
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
 
-        this.state.alerts.push({ brand, model: '', maxPrice, createdAt: new Date() });
-        localStorage.setItem('buscar-alerts', JSON.stringify(this.state.alerts));
-        this.showToast('Alerta creada', 'success');
-        this.renderAlerts();
+        // Pre-fill email if exists
+        const savedEmail = localStorage.getItem('buscar-email');
+        if (savedEmail) {
+            const emailInput = modal.querySelector('input[name="email"]');
+            if (emailInput) emailInput.value = savedEmail;
+        }
+
+        // Pre-fill current search filters if applicable
+        const f = this.state.filters;
+        if (f.brand) {
+            const brandSelect = modal.querySelector('select[name="brand"]');
+            if (brandSelect) {
+                brandSelect.value = f.brand;
+                this.updateModelSelect('alert-model', f.brand);
+                if (f.model) modal.querySelector('select[name="model"]').value = f.model;
+            }
+        }
+
+        lucide.createIcons();
     },
 
-    deleteAlert(index) {
-        this.state.alerts.splice(index, 1);
-        localStorage.setItem('buscar-alerts', JSON.stringify(this.state.alerts));
-        this.showToast('Alerta eliminada', 'info');
-        this.renderAlerts();
+    closeAlertModal() {
+        const modal = document.getElementById('alert-modal');
+        modal.classList.remove('open');
+        modal.innerHTML = '';
+        document.body.style.overflow = '';
+    },
+
+    async submitAlert(form) {
+        const formData = new FormData(form);
+        const userId = localStorage.getItem('buscar-user-id') || 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('buscar-user-id', userId);
+
+        // Save email for next time
+        localStorage.setItem('buscar-email', formData.get('email'));
+
+        const alertData = {
+            email: formData.get('email'),
+            brand: formData.get('brand'),
+            model: formData.get('model') || null,
+            max_price: parseInt(formData.get('max_price')),
+            min_year: formData.get('min_year') ? parseInt(formData.get('min_year')) : null,
+            max_km: formData.get('max_km') ? parseInt(formData.get('max_km')) : null,
+            fuel: formData.get('fuel') || null
+        };
+
+        try {
+            const res = await fetch(`${this.state.apiUrl}/alerts?user_id=${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(alertData)
+            });
+
+            if (!res.ok) throw new Error('Error creating alert');
+
+            this.showToast('Alerta creada correctamente', 'success');
+            this.closeAlertModal();
+            this.renderAlerts();
+
+        } catch (error) {
+            console.error('Error:', error);
+            this.showToast('Error al crear la alerta', 'error');
+        }
+    },
+
+    async deleteAlert(alertId) {
+        if (!confirm('¿Seguro que quieres eliminar esta alerta?')) return;
+
+        const userId = localStorage.getItem('buscar-user-id');
+        try {
+            const res = await fetch(`${this.state.apiUrl}/alerts/${alertId}?user_id=${userId}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                this.showToast('Alerta eliminada', 'success');
+                this.renderAlerts();
+            } else {
+                throw new Error('Failed to delete');
+            }
+        } catch (error) {
+            this.showToast('Error al eliminar la alerta', 'error');
+        }
     },
 
     clearFavorites() {

@@ -1,0 +1,42 @@
+# System / OS
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+backend/.venv/
+backend/env/
+backend/.env
+backend/*.log
+backend/server.log
+backend/celerybeat-schedule
+backend/celerybeat.pid
+
+# Database
+*.db
+*.sqlite3
+backend/buscar.db
+
+# Frontend / node (if applicable in future)
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*~
